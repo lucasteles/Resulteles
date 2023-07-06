@@ -186,7 +186,14 @@ Result<int, string> resultWithDelay2 = await results[0].Select(async n =>
     await Task.Delay(n);
     return n;
 }).ToTask();
+```
 
+# FluentAssertions Extensions
+
+[NuGet package](https://www.nuget.org/packages/Resulteles.FluentAssertions) available:
+
+```ps
+$ dotnet add package Resulteles.FluentAssertions
 ```
 
 # Alternatives

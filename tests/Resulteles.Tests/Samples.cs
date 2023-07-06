@@ -1,5 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Resulteles.Tests;
 
+[SuppressMessage("Minor Code Smell", "S1481:Unused local variables should be removed")]
+[SuppressMessage("ReSharper", "VariableHidesOuterVariable")]
 public class Samples
 {
     public static void Teste()
