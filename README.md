@@ -11,7 +11,7 @@
 
 # Resulteles
 
-This library contains Models, Formatters and Validator for common Brazilian documents
+Practical `Result` data structure for C#
 
 ## Getting started
 
