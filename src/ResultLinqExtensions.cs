@@ -123,7 +123,7 @@ public static class ResultLinqExtensions
     /// <summary>
     /// Return one result with all ok values or first error
     /// </summary>
-    public static Result<IReadOnlyList<TOk>, TError> ToSingleResult<TOk, TError>(
+    public static Result<IReadOnlyList<TOk>, TError> GroupResults<TOk, TError>(
         this IEnumerable<Result<TOk, TError>> results
     )
     {
@@ -140,15 +140,15 @@ public static class ResultLinqExtensions
     /// <summary>
     /// Return one result with all ok values or first error
     /// </summary>
-    public static Result<IReadOnlyList<TMap>, TError> ToSingleResult<TOk, TError, TMap>(
+    public static Result<IReadOnlyList<TMap>, TError> GroupResults<TOk, TError, TMap>(
         this IEnumerable<TOk> results,
         Func<TOk, Result<TMap, TError>> selector
-    ) => results.Select(selector).ToSingleResult();
+    ) => results.Select(selector).GroupResults();
 
     /// <summary>
     /// Return one result with all ok or all errors
     /// </summary>
-    public static Result<IReadOnlyList<TOk>, IReadOnlyList<TError>> ToSingleResultWithAllErrors<TOk, TError>(
+    public static Result<IReadOnlyList<TOk>, IReadOnlyList<TError>> GroupResultsWithErrors<TOk, TError>(
         this IEnumerable<Result<TOk, TError>> results
     )
     {
@@ -170,9 +170,8 @@ public static class ResultLinqExtensions
     /// <summary>
     /// Return one result with all ok values or first error
     /// </summary>
-    public static Result<IReadOnlyList<TMap>, IReadOnlyList<TError>> ToSingleResultWithAllErrors<TOk, TError, TMap>(
+    public static Result<IReadOnlyList<TMap>, IReadOnlyList<TError>> GroupResultsWithErrors<TOk, TError, TMap>(
         this IEnumerable<TOk> results,
         Func<TOk, Result<TMap, TError>> selector
-    ) => results.Select(selector).ToSingleResultWithAllErrors();
-
+    ) => results.Select(selector).GroupResultsWithErrors();
 }

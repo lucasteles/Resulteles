@@ -202,7 +202,7 @@ public class ResultLinqTests
     public void ShouldTraverseResultIntoSingleErrorResult()
     {
         var results = new Result<int, string>[] { "Err1", 42, "Err2", 99 };
-        results.ToSingleResult().Should().Be(
+        results.GroupResults().Should().Be(
             Result.Error<IReadOnlyList<int>, string>("Err1")
         );
     }
@@ -211,7 +211,7 @@ public class ResultLinqTests
     public void ShouldTraverseResultIntoErrorListResult()
     {
         var results = new Result<int, string>[] { "Err1", 42, "Err2", 99 };
-        results.ToSingleResultWithAllErrors().Should()
+        results.GroupResultsWithErrors().Should()
             .BeOfType<Result<IReadOnlyList<int>, IReadOnlyList<string>>>()
             .And.BeEquivalentTo(new
             {
@@ -224,7 +224,7 @@ public class ResultLinqTests
     public void ShouldTraverseResultIntoOkListResult()
     {
         var results = new Result<int, string>[] { 42, 99 };
-        results.ToSingleResult().Should()
+        results.GroupResults().Should()
             .BeOfType<Result<IReadOnlyList<int>, string>>()
             .And
             .BeEquivalentTo(new
@@ -237,7 +237,7 @@ public class ResultLinqTests
     [Test]
     public void ShouldTraverseEnumerableIntoSingleErrorResult()
     {
-        var results = new[] { 2, 3, 4, 5 }.ToSingleResult(IsEven);
+        var results = new[] { 2, 3, 4, 5 }.GroupResults(IsEven);
         results.Should().Be(
             Result.Error<IReadOnlyList<int>, string>("Invalid 3")
         );
@@ -246,7 +246,7 @@ public class ResultLinqTests
     [Test]
     public void ShouldEnumerableResultIntoErrorListResult()
     {
-        var results = new[] { 2, 3, 4, 5 }.ToSingleResultWithAllErrors(IsEven);
+        var results = new[] { 2, 3, 4, 5 }.GroupResultsWithErrors(IsEven);
         results.Should()
             .BeOfType<Result<IReadOnlyList<int>, IReadOnlyList<string>>>()
             .And.BeEquivalentTo(new
@@ -259,7 +259,7 @@ public class ResultLinqTests
     [Test]
     public void ShouldEnumerableResultIntoOkListResult()
     {
-        var results = new[] { 2, 4, 6 }.ToSingleResult(IsEven);
+        var results = new[] { 2, 4, 6 }.GroupResults(IsEven);
         results.Should()
             .BeOfType<Result<IReadOnlyList<int>, string>>()
             .And
