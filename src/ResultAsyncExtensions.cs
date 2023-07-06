@@ -51,13 +51,6 @@ public static class ResultAsyncExtensions
     /// Match the result to obtain the value
     /// </summary>
     public static async Task<T> Match<TOk, TError, T>(this Result<TOk, TError> result,
-        Func<TOk, Task<T>> ok, Func<TError, Task<T>> error) =>
-        result.IsOk ? await ok(result.OkValue) : await error(result.ErrorValue);
-
-    /// <summary>
-    /// Match the result to obtain the value
-    /// </summary>
-    public static async Task<T> Match<TOk, TError, T>(this Result<TOk, TError> result,
         Func<TOk, Task<T>> ok,
         Func<TError, T> error) =>
         result.IsOk ? await ok(result.OkValue) : error(result.ErrorValue);
@@ -70,6 +63,45 @@ public static class ResultAsyncExtensions
             Func<TOk, T> ok,
             Func<TError, Task<T>> error) =>
         result.IsOk ? ok(result.OkValue) : await error(result.ErrorValue);
+
+    /// <summary>
+    /// Switch the result to process value
+    /// </summary>
+    public static async Task SwitchAsync<TOk, TError>(
+        this Result<TOk, TError> result,
+        Func<TOk, Task> ok,
+        Func<TError, Task> error)
+    {
+        if (result.IsOk)
+            await ok(result.OkValue);
+        else
+            await error(result.ErrorValue);
+    }
+
+    /// <summary>
+    /// Switch the result to process value
+    /// </summary>
+    public static async Task SwitchAsync<TOk, TError>(this Result<TOk, TError> result,
+        Func<TOk, Task> ok, Action<TError> error)
+    {
+        if (result.IsOk)
+            await ok(result.OkValue);
+        else
+            error(result.ErrorValue);
+    }
+
+    /// <summary>
+    /// Switch the result to process value
+    /// </summary>
+    public static async Task SwitchAsync<TOk, TError>(this Result<TOk, TError> result,
+        Action<TOk> ok,
+        Func<TError, Task> error)
+    {
+        if (result.IsOk)
+            ok(result.OkValue);
+        else
+            await error(result.ErrorValue);
+    }
 
     /// <summary>
     /// Projects ok result value into a new form.
@@ -145,43 +177,5 @@ public static class ResultAsyncExtensions
     public static async Task<Result<TMap, TError>> SelectManyAsync<TOk, TError, TMap>(
         this Result<TOk, TError> result,
         Func<TOk, Task<Result<TMap, TError>>> bind) =>
-        result.IsError ? new Result<TMap, TError>(result.ErrorValue) : await bind(result.OkValue);
-
-    /// <summary>
-    /// Switch the result to process value
-    /// </summary>
-    public static async Task Switch<TOk, TError>(this Result<TOk, TError> result,
-        Func<TOk, Task> ok,
-        Func<TError, Task> error)
-    {
-        if (result.IsOk)
-            await ok(result.OkValue);
-        else
-            await error(result.ErrorValue);
-    }
-
-    /// <summary>
-    /// Switch the result to process value
-    /// </summary>
-    public static async Task Switch<TOk, TError>(this Result<TOk, TError> result,
-        Func<TOk, Task> ok, Action<TError> error)
-    {
-        if (result.IsOk)
-            await ok(result.OkValue);
-        else
-            error(result.ErrorValue);
-    }
-
-    /// <summary>
-    /// Switch the result to process value
-    /// </summary>
-    public static async Task Switch<TOk, TError>(this Result<TOk, TError> result,
-        Action<TOk> ok,
-        Func<TError, Task> error)
-    {
-        if (result.IsOk)
-            ok(result.OkValue);
-        else
-            await error(result.ErrorValue);
-    }
+        result.IsError ? new(result.ErrorValue) : await bind(result.OkValue);
 }

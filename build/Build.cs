@@ -1,7 +1,8 @@
 class BuildProject : NukeBuild
 {
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-    readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+    readonly Configuration Configuration =
+        IsLocalBuild ? Configuration.Debug : Configuration.Release;
 
     [Parameter(List = false)] readonly bool DotnetRunningInContainer;
     [GlobalJson] readonly GlobalJson GlobalJson;
@@ -39,18 +40,6 @@ class BuildProject : NukeBuild
                 .EnableNoRestore()));
 
     Target Test => _ => _
-        .Description("Run all tests")
-        .DependsOn(Build)
-        .Executes(() => Solution
-            .GetProjects("*.Tests")
-            .ForEach(project =>
-                DotNetTest(s => s
-                    .EnableNoBuild()
-                    .EnableNoRestore()
-                    .SetConfiguration(Configuration)
-                    .SetProjectFile(project))));
-
-    Target TestCoverage => _ => _
         .Description("Run tests with coverage")
         .DependsOn(Build)
         .Executes(() => DotNetTest(s => s
@@ -74,7 +63,8 @@ class BuildProject : NukeBuild
     Target Lint => _ => _
         .Description("Check for codebase formatting and analysers")
         .DependsOn(Build)
-        .Executes(() => DotNet($"format -v normal --no-restore --verify-no-changes \"{Solution.Path}\""));
+        .Executes(() =>
+            DotNet($"format -v normal --no-restore --verify-no-changes \"{Solution.Path}\""));
 
     Target Format => _ => _
         .Description("Try fix codebase formatting and analysers")
@@ -83,12 +73,12 @@ class BuildProject : NukeBuild
 
     Target Report => _ => _
         .Description("Run tests and generate coverage report")
-        .DependsOn(TestCoverage)
+        .DependsOn(Test)
         .Triggers(GenerateReport, BrowseReport);
 
     Target GenerateReport => _ => _
         .Description("Generate test coverage report")
-        .After(TestCoverage)
+        .After(Test)
         .OnlyWhenDynamic(() => CoverageFiles.GlobFiles().Any())
         .Executes(() =>
             ReportGenerator(r => r
@@ -124,7 +114,7 @@ class BuildProject : NukeBuild
 
     Target GenerateBadges => _ => _
         .Description("Generate cool badges for readme")
-        .After(TestCoverage)
+        .After(Test)
         .Requires(() => CoverageFiles.GlobFiles().Any())
         .Executes(() =>
         {

@@ -91,8 +91,7 @@
               "Lint",
               "Report",
               "Restore",
-              "Test",
-              "TestCoverage"
+              "Test"
             ]
           }
         },
@@ -115,8 +114,7 @@
               "Lint",
               "Report",
               "Restore",
-              "Test",
-              "TestCoverage"
+              "Test"
             ]
           }
         },

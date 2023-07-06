@@ -5,6 +5,11 @@ using Resulteles.Json;
 namespace Resulteles;
 
 /// <summary>
+/// Represents an successful operation
+/// </summary>
+public readonly record struct Success;
+
+/// <summary>
 /// Helper type for errorValue handling without exceptions.
 /// </summary>
 [DebuggerDisplay("{DebuggerDisplay(),nq}")]
@@ -40,8 +45,8 @@ public readonly struct Result<TOk, TError> : IEquatable<Result<TOk, TError>>
     public Result(TOk okValue)
     {
         IsOk = true;
-        this.OkValue = okValue;
-        this.ErrorValue = default;
+        OkValue = okValue;
+        ErrorValue = default;
     }
 
     /// <summary>
@@ -50,8 +55,8 @@ public readonly struct Result<TOk, TError> : IEquatable<Result<TOk, TError>>
     public Result(TError error)
     {
         IsOk = false;
-        this.OkValue = default;
-        this.ErrorValue = error;
+        OkValue = default;
+        ErrorValue = error;
     }
 
     /// <summary>
@@ -125,7 +130,7 @@ public readonly struct Result<TOk, TError> : IEquatable<Result<TOk, TError>>
     /// Match the result to obtain the value
     /// </summary>
     public T Match<T>(Func<TOk, T> ok, Func<TError, T> error) =>
-        IsOk ? ok(this.OkValue) : error(this.ErrorValue);
+        IsOk ? ok(OkValue) : error(ErrorValue);
 
     /// <summary>
     /// Switch the result to process value
@@ -133,8 +138,8 @@ public readonly struct Result<TOk, TError> : IEquatable<Result<TOk, TError>>
     public void Switch(Action<TOk> ok, Action<TError> error)
     {
         if (IsOk)
-            ok(this.OkValue);
+            ok(OkValue);
         else
-            error(this.ErrorValue);
+            error(ErrorValue);
     }
 }

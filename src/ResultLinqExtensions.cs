@@ -100,7 +100,14 @@ public static class ResultLinqExtensions
     /// <summary>
     /// Return new collection with ok values only
     /// </summary>
-    public static IEnumerable<TOk> Choose<TOk, TError>(
+    public static IEnumerable<TError> GetErrorValues<TOk, TError>(
+        this IEnumerable<Result<TOk, TError>> results) =>
+        from result in results where result.IsError select result.ErrorValue;
+
+    /// <summary>
+    /// Return new collection with ok values only
+    /// </summary>
+    public static IEnumerable<TOk> GetOkValues<TOk, TError>(
         this IEnumerable<Result<TOk, TError>> results
     ) =>
         from result in results where result.IsOk select result.OkValue;
@@ -108,7 +115,64 @@ public static class ResultLinqExtensions
     /// <summary>
     /// Return new collection with ok values only
     /// </summary>
-    public static IEnumerable<TError> ChooseErrors<TOk, TError>(
-        this IEnumerable<Result<TOk, TError>> results) =>
-        from result in results where result.IsError select result.ErrorValue;
+    public static IEnumerable<TMap> ChooseResult<TOk, TError, TMap>(
+        this IEnumerable<TOk> results,
+        Func<TOk, Result<TMap, TError>> selector
+    ) => results.Select(selector).GetOkValues();
+
+    /// <summary>
+    /// Return one result with all ok values or first error
+    /// </summary>
+    public static Result<IReadOnlyList<TOk>, TError> ToSingleResult<TOk, TError>(
+        this IEnumerable<Result<TOk, TError>> results
+    )
+    {
+        var values = new List<TOk>();
+        foreach (var result in results)
+        {
+            if (result.IsError) return result.ErrorValue;
+            values.Add(result.OkValue);
+        }
+
+        return values.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Return one result with all ok values or first error
+    /// </summary>
+    public static Result<IReadOnlyList<TMap>, TError> ToSingleResult<TOk, TError, TMap>(
+        this IEnumerable<TOk> results,
+        Func<TOk, Result<TMap, TError>> selector
+    ) => results.Select(selector).ToSingleResult();
+
+    /// <summary>
+    /// Return one result with all ok or all errors
+    /// </summary>
+    public static Result<IReadOnlyList<TOk>, IReadOnlyList<TError>> ToSingleResultWithAllErrors<TOk, TError>(
+        this IEnumerable<Result<TOk, TError>> results
+    )
+    {
+        var values = new List<TOk>();
+        var errors = new List<TError>();
+
+        foreach (var result in results)
+        {
+            if (result.IsOk)
+                values.Add(result.OkValue);
+            else
+                errors.Add(result.ErrorValue);
+        }
+
+        if (errors.Any()) return errors.AsReadOnly();
+        return values.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Return one result with all ok values or first error
+    /// </summary>
+    public static Result<IReadOnlyList<TMap>, IReadOnlyList<TError>> ToSingleResultWithAllErrors<TOk, TError, TMap>(
+        this IEnumerable<TOk> results,
+        Func<TOk, Result<TMap, TError>> selector
+    ) => results.Select(selector).ToSingleResultWithAllErrors();
+
 }

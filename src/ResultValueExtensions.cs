@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Resulteles;
@@ -63,7 +62,7 @@ public static class ResultValueExtensions
             if (result.ErrorValue is Exception exception)
                 throw exception;
             else
-                throw new ResultInvalidException($"{result.ErrorValue}");
+                throw new ResultException($"{result.ErrorValue}");
 
         return result.OkValue;
     }
@@ -76,7 +75,7 @@ public static class ResultValueExtensions
         Func<TError, string> formatMessage)
     {
         if (result.IsError)
-            throw new ResultInvalidException(formatMessage(result.ErrorValue));
+            throw new ResultException(formatMessage(result.ErrorValue));
 
         return result.OkValue;
     }
@@ -105,7 +104,7 @@ public static class ResultValueExtensions
         if (result.ErrorValue is Exception exception)
             throw exception;
 
-        throw new ResultInvalidException($"{result.ErrorValue}");
+        throw new ResultException($"{result.ErrorValue}");
     }
 
     /// <summary>
@@ -115,7 +114,7 @@ public static class ResultValueExtensions
         Func<TError, string> formatMessage)
     {
         if (result.IsError)
-            throw new ResultInvalidException(formatMessage(result.ErrorValue));
+            throw new ResultException(formatMessage(result.ErrorValue));
     }
 
     /// <summary>
@@ -197,24 +196,6 @@ public static class ResultValueExtensions
         result.Select(x => (TOk?)x);
 
     /// <summary>
-    /// Convert result of task into task of result
-    /// </summary>
-    public static Result<IReadOnlyList<TOk>, TError> ToResult<TOk, TError>(
-        this IEnumerable<Result<TOk, TError>> results)
-    {
-        List<TOk> okResults = new();
-        foreach (var result in results)
-        {
-            if (result.IsOk)
-                okResults.Add(result.OkValue);
-            else
-                return new(result.ErrorValue);
-        }
-
-        return new(new ReadOnlyCollection<TOk>(okResults));
-    }
-
-    /// <summary>
     /// If a result is successful, returns it, otherwise <see langword="null"/>.
     /// </summary>
     /// <returns>Nullable value.</returns>
@@ -222,4 +203,14 @@ public static class ResultValueExtensions
         where T : struct
         =>
             valueResult.IsOk ? valueResult.OkValue : null;
+
+    /// <summary>
+    /// Run side effect when result is OK
+    /// </summary>
+    public static Result<TOk, TError> Tap<TOk, TError>(
+        this Result<TOk, TError> result, Action<TOk> action)
+    {
+        if (result.IsOk) action(result.OkValue);
+        return result;
+    }
 }

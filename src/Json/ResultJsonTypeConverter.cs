@@ -70,11 +70,11 @@ public class ResultJsonConverter<TOk, TError> : JsonConverter<Result<TOk, TError
         Utf8JsonReader valueReader = new(JsonSerializer.SerializeToUtf8Bytes(value));
         valueReader.Read();
         if (status.GetString() == statusOk)
-            return new Result<TOk, TError>(
+            return new(
                 okConverter.Read(ref valueReader, okType, options)!);
 
         if (status.GetString() == statusError)
-            return new Result<TOk, TError>(
+            return new(
                 errorConverter.Read(ref valueReader, errorType, options)!);
 
         throw new JsonException($"Invalid status {status}");

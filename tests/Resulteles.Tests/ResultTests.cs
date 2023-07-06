@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Resulteles;
 
 namespace Resulteles.Tests;
 
@@ -22,6 +21,22 @@ public class ResultTests
     }
 
     [Test]
+    public void ShouldCompareNotEqualBeFalse()
+    {
+        var ok1 = Result<int, string>.Ok(42);
+        var ok2 = Result<int, string>.Ok(42);
+        (ok1 != ok2).Should().BeFalse();
+    }
+
+    [Test]
+    public void ShouldCompareNotEqualBeTrue()
+    {
+        var ok1 = Result<int, string>.Ok(42);
+        var ok2 = Result<int, string>.Ok(99);
+        (ok1 != ok2).Should().BeTrue();
+    }
+
+    [Test]
     public void ShouldSerializeOkResult()
     {
         var ok = Result<int, string>.Ok(42);
@@ -40,39 +55,7 @@ public class ResultTests
     }
 
     [Test]
-    public void ShouldCombineOkResults()
-    {
-        var result =
-            from ok1 in Result<int, string>.Ok(42)
-            from ok2 in Result<int, string>.Ok(100)
-            select ok1 + ok2;
-
-        result.Should().Be(Result.Ok(142));
-    }
-
-    [Test]
-    public void ShouldShorCircuitErrorResult()
-    {
-        var result =
-            from ok1 in Result<int, string>.Ok(42)
-            from ok2 in Result<int, string>.Error("FAIL")
-            from ok3 in Result<int, string>.Ok(100)
-            select ok1 + ok2 + ok3;
-        result.Should().Be(Result.Error<int, string>("FAIL"));
-    }
-
-    [Test]
-    public void ShouldBeEnumerable()
-    {
-        foreach (var value in Result<int, string>.Ok(42).AsEnumerable())
-            if (value == 42)
-                Assert.Pass();
-
-        Assert.Fail("unexpected!");
-    }
-
-    [Test]
-    public void ShouldMatchPropertyOk()
+    public void ShouldPatternMatchPropertyOk()
     {
         if (Result<int, string>.Ok(42) is { Value: 42 })
             Assert.Pass();
@@ -81,7 +64,7 @@ public class ResultTests
     }
 
     [Test]
-    public void ShouldMatchTupleOk()
+    public void ShouldPatternMatchTupleOk()
     {
         if (Result<int, string>.Ok(42) is (true, 42, null))
             Assert.Pass();
@@ -90,17 +73,22 @@ public class ResultTests
     }
 
     [Test]
-    public void ShouldMapValue() =>
-        Result<int, string>.Ok(42)
-            .Select(x => x.ToString())
-            .Should().Be(Result<string, string>.Ok("42"));
-
-    [Test]
-    public void ShouldTryGet()
+    public void ShouldTryOk()
     {
         var result = Result<int, string>.Ok(42);
 
         if (result.TryOk(out var value) && value == 42)
+            Assert.Pass();
+
+        Assert.Fail();
+    }
+
+    [Test]
+    public void ShouldTryError()
+    {
+        var result = Result<int, string>.Error("Failure");
+
+        if (result.TryError(out var value) && value == "Failure")
             Assert.Pass();
 
         Assert.Fail();
@@ -121,20 +109,170 @@ public class ResultTests
         Assert.Fail();
     }
 
-
     [Test]
-    public async Task ShouldMapAsync()
+    public void ShouldMatchSuccessValue()
     {
-        var result = await Result<int, string>.Ok(42).SelectAsync(Task.FromResult);
-        result.Should().Be(Result.Ok(42));
+        var result = Result<int, string>.Ok(42);
+
+        var value = result.Match(
+            x => x.ToString(),
+            _ => "NOPE"
+        );
+
+        value.Should().Be("42");
     }
 
     [Test]
-    public async Task ShouldBindAsync()
+    public void ShouldMatchErrorValue()
     {
-        var result = await Result<int, string>.Ok(42)
-            .SelectManyAsync(x => Task.FromResult(Result.Ok(x + 10)));
+        var result = Result<int, string>.Error("Err");
 
-        result.Should().Be(Result.Ok(52));
+        var value = result.Match(
+            x => x.ToString(),
+            error => $"{error}!"
+        );
+
+        value.Should().Be("Err!");
+    }
+
+
+    [Test]
+    public void ShouldSwitchOnSuccessValue()
+    {
+        var result = Result<int, string>.Ok(42);
+
+        result.Switch(
+            value =>
+            {
+                value.Should().Be(42);
+                Assert.Pass();
+            },
+            _ =>
+            {
+                Assert.Fail();
+            });
+
+        Assert.Fail();
+    }
+
+    [Test]
+    public void ShouldSwitchOnErrorValue()
+    {
+        var result = Result<int, string>.Error("Err");
+
+        result.Switch(
+            _ =>
+            {
+                Assert.Fail();
+            },
+            error =>
+            {
+                error.Should().Be("Err");
+                Assert.Pass();
+            });
+
+        Assert.Fail();
+    }
+
+    [PropertyTest]
+    public void ShouldValueBeSameAsOkValue(int okValue)
+    {
+        var result = Result.Ok(okValue);
+        result.Value.Should().Be(okValue);
+    }
+
+    [PropertyTest]
+    public void ShouldValueBeSameAsErrorValue(string errorValue)
+    {
+        var result = Result.Error(errorValue);
+        result.Value.Should().Be(errorValue);
+    }
+
+    [PropertyTest]
+    public bool ShouldExplicitCastOnOk(int okValue)
+    {
+        var result = Result.Ok(okValue);
+        var casted = (int)result;
+
+        return casted == okValue;
+    }
+
+    [PropertyTest]
+    public bool ShouldExplicitCastOnError(string errorValue)
+    {
+        var result = Result.Error(errorValue);
+        var casted = (string)result;
+
+        return casted == errorValue;
+    }
+
+
+    [Test]
+    public void ShouldThrowOnBadExplicitErrorCast()
+    {
+        var result = Result.Error<int, string>("NOPE");
+        var action = () => (int)result;
+        action.Should().Throw<ResultInvalidCastException>();
+    }
+
+    [Test]
+    public void ShouldThrowOnExplicitCastOnError()
+    {
+        var result = Result.Ok<int, string>(42);
+        var action = () => (string)result;
+        action.Should().Throw<ResultInvalidCastException>();
+    }
+
+    [Test]
+    public void ShouldReturnOkValueImplicitly()
+    {
+        Result<int, string> Stuff() => 42;
+        Stuff().Should().Be(Result.Ok(42));
+    }
+
+    [Test]
+    public void ShouldReturnErrorValueImplicitly()
+    {
+        Result<int, string> Stuff() => "Err";
+        Stuff().Should().Be(Result.Error<int, string>("Err"));
+    }
+
+
+    [Test]
+    public void ShouldTryResultWithSuccess()
+    {
+        var result = Result.Try(() => 42);
+        result.Should().Be(Result.Ok<int, Exception>(42));
+    }
+
+    [Test]
+    public void ShouldTryResultWithError()
+    {
+        var result = Result.Try<int>(() =>
+        {
+            throw new InvalidOperationException("NOPE");
+        });
+
+        result.Should().BeOfType<Result<int, Exception>>();
+        result.Value.Should().BeOfType<InvalidOperationException>().And.BeEquivalentTo(new { Message = "NOPE" });
+    }
+
+    [Test]
+    public async Task ShouldTryAsyncResultWithSuccess()
+    {
+        var result = await Result.TryAsync(() => Task.FromResult(42));
+        result.Should().Be(Result.Ok<int, Exception>(42));
+    }
+
+    [Test]
+    public async Task ShouldTryAsyncResultWithError()
+    {
+        var result = await Result.TryAsync<int>(() =>
+        {
+            throw new InvalidOperationException("NOPE");
+        });
+
+        result.Should().BeOfType<Result<int, Exception>>();
+        result.Value.Should().BeOfType<InvalidOperationException>().And.BeEquivalentTo(new { Message = "NOPE" });
     }
 }

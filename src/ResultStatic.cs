@@ -26,6 +26,12 @@ public static class Result
         Result<TOk, TError>.Error(error);
 
     /// <summary>
+    /// Represents an Error or a Failure. The code failed with a value of 'TError representing what went wrong.
+    /// </summary>
+    public static Result<Success, TError> Error<TError>(TError error) =>
+        Result<Success, TError>.Error(error);
+
+    /// <summary>
     /// Try run function, catching exceptions as a result error value
     /// </summary>
     public static Result<TOk, Exception> Try<TOk>(Func<TOk> func)
