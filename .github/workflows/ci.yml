@@ -36,7 +36,7 @@ jobs:
               run: dotnet nuke lint
 
             - name: Tests
-              run: dotnet nuke test-coverage --configuration Release --skip build --no-logo
+              run: dotnet nuke test --configuration Release --skip build --no-logo
 
             - name: Test Result
               if: ${{ github.actor != 'dependabot[bot]' && (success() || failure()) }}
