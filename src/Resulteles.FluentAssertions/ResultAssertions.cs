@@ -87,7 +87,7 @@ public class ResultTStringAssertions<T>
         return new(this);
     }
 
-    public AndConstraint<ResultTStringAssertions<T>> ErrorWithMessage(string message) =>
+    public AndConstraint<ResultTStringAssertions<T>> BeErrorWithMessage(string message) =>
         BeError().And.HaveMessage(message);
 
     public AndConstraint<ResultTStringAssertions<T>> Be(T other)
